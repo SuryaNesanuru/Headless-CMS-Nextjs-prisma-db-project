@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { FileText, Plus, ChevronLeft, ChevronRight } from "lucide-react";
@@ -17,7 +17,7 @@ interface Entry {
   updatedAt: string;
 }
 
-export default function ContentPage() {
+function ContentList() {
   const searchParams = useSearchParams();
   const preselectedModelId = searchParams.get("modelId");
   const [models, setModels] = useState<Model[]>([]);
@@ -202,5 +202,17 @@ export default function ContentPage() {
         </>
       )}
     </div>
+  );
+}
+
+export default function ContentPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center py-20">
+        <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <ContentList />
+    </Suspense>
   );
 }
