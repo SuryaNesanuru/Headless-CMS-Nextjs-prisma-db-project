@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  EDITOR
+  VIEWER
+}
+
+enum EntryStatus {
+  DRAFT
+  REVIEW
+  PUBLISHED
+}
+
+model User {
+  id            String         @id @default(cuid())
+  name          String
+  email         String         @unique
+  password      String
+  role          Role           @default(VIEWER)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  contentModels ContentModel[]
+  contentEntries ContentEntry[]
+  media         Media[]
+}
+
+model ContentModel {
+  id          String         @id @default(cuid())
+  name        String
+  slug        String         @unique
+  description String?
+  fields      Json
+  createdBy   User           @relation(fields: [createdById], references: [id])
+  createdById String
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  entries     ContentEntry[]
+}
+
+model ContentEntry {
+  id          String      @id @default(cuid())
+  model       ContentModel @relation(fields: [modelId], references: [id], onDelete: Cascade)
+  modelId     String
+  data        Json
+  status      EntryStatus @default(DRAFT)
+  version     Int         @default(1)
+  publishedAt DateTime?
+  scheduledAt DateTime?
+  createdBy   User        @relation(fields: [createdById], references: [id])
+  createdById String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Media {
+  id          String   @id @default(cuid())
+  filename    String
+  url         String
+  mimeType    String
+  size        Int
+  uploadedBy  User     @relation(fields: [uploadedById], references: [id])
+  uploadedById String
+  createdAt   DateTime @default(now())
+}
+
+model Webhook {
+  id        String       @id @default(cuid())
+  name      String
+  url       String
+  events    Json
+  secret    String?
+  active    Boolean      @default(true)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  logs      WebhookLog[]
+}
+
+model WebhookLog {
+  id        String   @id @default(cuid())
+  webhook   Webhook  @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+  webhookId String
+  event     String
+  payload   Json
+  status    Int
+  response  String?
+  createdAt DateTime @default(now())
+}
